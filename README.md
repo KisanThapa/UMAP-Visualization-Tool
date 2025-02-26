@@ -33,6 +33,24 @@ AAACATACCAGAAA,2.553,7.292,-8.084,0.134,4.114,NNN
 AAACATACCACTGT,3.954,-5.444,-2.829,8.115,-1.905,NNN
 ```
 
+You can get this data format using `scanpy`  from `anndata` in Python.
+```python
+import scanpy as sc
+
+adata = sc.read_h5ad('your_data.h5ad')
+
+# Do other preprocessing steps(e.g., filtering, normalization, etc.)
+
+# Perform UMAP
+sc.pp.neighbors(adata, n_neighbors=15, n_pcs=10, metric="cosine")
+sc.tl.umap(adata, min_dist=0.1)
+
+# Save UMAP coordinates
+umap_df = adata.obsm.to_df()
+umap_df.index = adata.obs_names
+umap_df["Cluster"] = "NNN" # Replace with your cluster labels(e.g., adata.obs['louvain'])
+```
+
 
 - Rows with missing or malformed data will be skipped.
 - Numeric columns (e.g., `X_umap1`, `X_umap2`) must contain valid numbers.
@@ -41,7 +59,6 @@ AAACATACCACTGT,3.954,-5.444,-2.829,8.115,-1.905,NNN
 
 - **File Not Loading**: Ensure the CSV has the required `X_umap1` and `X_umap2` columns and is properly formatted.
 - **No Plot Displayed**: Check the browser console (F12) for JavaScript errors and verify your file structure.
-- **Performance Issues**: For very large datasets (>10,000 points), consider downsampling your data for better performance.
 
 ## Dependencies
 
