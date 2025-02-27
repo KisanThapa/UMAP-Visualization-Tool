@@ -1,0 +1,9 @@
+I want this project to upload four files:
+1. Umap coordinates
+2. metadata file
+3. p-values for each cells
+4. benjamini-hotchberg rejection (whether to reject the null hypothesis, True or False)
+
+Then I want a button "upload" to upload the files.
+
+I will further explain how to handle these files.

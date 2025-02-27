@@ -5,137 +5,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>UMAP Visualization</title>
-    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
-    <style>
-        body {
-            margin: 0;
-            padding: 20px;
-            font-family: 'Segoe UI', Arial, sans-serif;
-            background-color: #f8f9fa;
-            color: #333;
-        }
-
-        .container {
-            max-width: 1400px;
-            margin: 0 auto;
-            background: white;
-            border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            padding: 20px;
-        }
-
-        .header {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 15px;
-            margin-bottom: 25px;
-        }
-
-        .github-btn {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            width: 36px;
-            height: 36px;
-            background: #e9ecef;
-            border-radius: 50%;
-            text-decoration: none;
-            transition: background 0.2s;
-        }
-
-        .github-btn:hover {
-            background: #ced4da;
-        }
-
-        .github-btn svg {
-            width: 24px;
-            height: 24px;
-        }
-
-        h1 {
-            text-align: center;
-            color: #2c3e50;
-            margin-bottom: 25px;
-            font-size: 24px;
-        }
-
-        .controls {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 15px;
-            justify-content: center;
-            margin: 20px 0;
-            padding: 15px;
-            background: #f1f3f5;
-            border-radius: 5px;
-        }
-
-        .control-group {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        label {
-            font-weight: 500;
-            color: #495057;
-        }
-
-        input[type="file"],
-        select,
-        input[type="number"] {
-            padding: 8px;
-            border: 1px solid #ced4da;
-            border-radius: 4px;
-            font-size: 14px;
-            background: white;
-        }
-
-        button {
-            padding: 8px 16px;
-            background: #007bff;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            transition: background 0.2s;
-        }
-
-        button:hover {
-            background: #0056b3;
-        }
-
-        #status {
-            text-align: center;
-            padding: 10px;
-            margin: 15px 0;
-            border-radius: 4px;
-        }
-
-        .loading {
-            background: #fff3cd;
-            color: #856404;
-        }
-
-        .success {
-            background: #d4edda;
-            color: #155724;
-        }
-
-        .error {
-            background: #f8d7da;
-            color: #721c24;
-        }
-
-        #plot {
-            width: 100%;
-            height: 1200px;
-            border: 1px solid #e9ecef;
-            border-radius: 5px;
-            background: white;
-        }
-    </style>
+    <script src="https://cdn.plot.ly/plotly-3.0.1.min.js"></script>
+    <link rel="stylesheet" href="css/styles.css">
 </head>
 
 <body>
@@ -151,156 +22,34 @@
                 </svg>
             </a>
         </div>
-        <div class="controls">
-            <div class="control-group">
-                <input type="file" id="fileInput" accept=".csv">
+        <div class="main-content">
+            <div class="controls">
+                <div class="control-group">
+                    <input type="file" id="fileInput" accept=".csv,.tsv">
+                </div>
+                <div class="control-group">
+                    <label for="colorSelect">Color by:</label>
+                    <select id="colorSelect"></select>
+                </div>
+                <div class="control-group">
+                    <label for="markerSize">Marker Size:</label>
+                    <input type="number" id="markerSize" min="1" max="20" value="6">
+                </div>
+                <div class="control-group">
+                    <label for="opacity">Opacity:</label>
+                    <input type="number" id="opacity" min="0" max="1" step="0.1" value="0.7">
+                </div>
+                <button id="resetZoom">Reset Zoom</button>
             </div>
-            <div class="control-group">
-                <label for="colorSelect">Color by:</label>
-                <select id="colorSelect"></select>
+            <div id="status" class="loading">
+                Please upload a CSV or TSV file with UMAP coordinates
+                <a href="https://github.com/KisanThapa/UMAP-Visualization-Tool?tab=readme-ov-file#readme">Sample file
+                    format</a>
             </div>
-            <div class="control-group">
-                <label for="markerSize">Marker Size:</label>
-                <input type="number" id="markerSize" min="1" max="20" value="6">
-            </div>
-            <div class="control-group">
-                <label for="opacity">Opacity:</label>
-                <input type="number" id="opacity" min="0" max="1" step="0.1" value="0.7">
-            </div>
-            <button id="resetZoom">Reset Zoom</button>
+            <div id="plot"></div>
         </div>
-        <div id="status" class="loading">
-            Please upload a CSV file with UMAP coordinates
-            <a href="https://github.com/KisanThapa/UMAP-Visualization-Tool?tab=readme-ov-file#readme">Sample file
-                format</a>
-        </div>
-        <div id="plot"></div>
     </div>
-
-    <script>
-        let currentData = null;
-        const plotDiv = document.getElementById('plot');
-
-        function updateStatus(message, type = 'loading') {
-            const status = document.getElementById('status');
-            status.textContent = message;
-            status.className = type;
-        }
-
-        function populateColorOptions(headers) {
-            const colorSelect = document.getElementById('colorSelect');
-            colorSelect.innerHTML = '<option value="none">None</option>';
-            headers.forEach(header => {
-                if (!header.includes('X_')) {
-                    const option = document.createElement('option');
-                    option.value = header;
-                    option.textContent = header;
-                    colorSelect.appendChild(option);
-                }
-            });
-        }
-
-        function parseFile(file) {
-            updateStatus(`Loading ${file.name}...`);
-            const reader = new FileReader();
-            reader.onload = function (e) {
-                try {
-                    const content = e.target.result;
-                    currentData = parseCSV(content);
-                    populateColorOptions(Object.keys(currentData));
-                    createPlot();
-                    updateStatus(`Loaded ${file.name} successfully (${currentData.X_umap1.length} points)`, 'success');
-                } catch (error) {
-                    updateStatus(`Error: ${error.message}`, 'error');
-                }
-            };
-            reader.onerror = () => updateStatus('Error reading file', 'error');
-            reader.readAsText(file);
-        }
-
-        function parseCSV(csv) {
-            const lines = csv.trim().split('\n');
-            const headers = lines[0].split(',').map(h => h.trim());
-            const data = {};
-
-            headers.forEach(header => data[header] = []);
-            const required = ['X_umap1', 'X_umap2'];
-            if (!required.every(col => headers.includes(col))) {
-                throw new Error('Missing required columns: ' + required.join(', '));
-            }
-
-            for (let i = 1; i < lines.length; i++) {
-                const values = lines[i].split(',').map(v => v.trim());
-                if (values.length !== headers.length) continue; // Skip malformed rows
-                headers.forEach((header, idx) => {
-                    const value = header.includes('X_') ? parseFloat(values[idx]) : values[idx];
-                    if (header.includes('X_') && isNaN(value)) {
-                        throw new Error(`Invalid numeric value at row ${i + 1}, column ${header}`);
-                    }
-                    data[header].push(value);
-                });
-            }
-            return data;
-        }
-
-        function createPlot(colorBy = 'Cluster') {
-            if (!currentData || !currentData.X_umap1) return;
-
-            const markerSize = parseInt(document.getElementById('markerSize').value);
-            const opacity = parseFloat(document.getElementById('opacity').value);
-
-            const trace = {
-                x: currentData.X_umap1,
-                y: currentData.X_umap2,
-                mode: 'markers',
-                type: 'scatter',
-                marker: { size: markerSize, opacity },
-                text: currentData.cell_barcode.map((barcode, i) => {
-                    return `${barcode}<br>Cluster: ${currentData.Cluster?.[i] || 'N/A'}<br>X: ${currentData.X_umap1[i].toFixed(2)}<br>Y: ${currentData.X_umap2[i].toFixed(2)}`;
-                }),
-                hoverinfo: 'text'
-            };
-
-            if (colorBy !== 'none' && currentData[colorBy]) {
-                trace.marker.color = currentData[colorBy];
-            }
-
-            const layout = {
-                title: {
-                    text: 'UMAP Coordinates Visualization',
-                    font: { size: 18 }
-                },
-                xaxis: { title: 'UMAP 1', zeroline: false },
-                yaxis: { title: 'UMAP 2', zeroline: false },
-                hovermode: 'closest',
-                plot_bgcolor: '#ffffff',
-                paper_bgcolor: '#ffffff',
-                margin: { t: 60, b: 60, l: 60, r: 60 },
-                showlegend: false
-            };
-
-            const config = {
-                responsive: true,
-                displayModeBar: true,
-                modeBarButtonsToAdd: ['drawrect', 'drawcircle'],
-                modeBarButtonsToRemove: ['lasso2d', 'select2d']
-            };
-
-            Plotly.newPlot(plotDiv, [trace], layout, config);
-        }
-
-        // Event Listeners
-        document.getElementById('fileInput').addEventListener('change', e => {
-            if (e.target.files[0]) parseFile(e.target.files[0]);
-        });
-
-        document.getElementById('colorSelect').addEventListener('change', e => createPlot(e.target.value));
-        document.getElementById('markerSize').addEventListener('input', () => createPlot(document.getElementById('colorSelect').value));
-        document.getElementById('opacity').addEventListener('input', () => createPlot(document.getElementById('colorSelect').value));
-        document.getElementById('resetZoom').addEventListener('click', () => {
-            Plotly.relayout(plotDiv, { 'xaxis.autorange': true, 'yaxis.autorange': true });
-        });
-    </script>
+    <script src="js/script.js"></script>
 </body>
 
 </html>
